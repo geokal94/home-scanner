@@ -2,8 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import config
 
-print("config.proxy_host:", config.PROXY_HOST)
-print("config.proxy_port:", config.PROXY_PORT)
 
 headers = {
     "Host": "www.spitogatos.gr",
@@ -20,11 +18,23 @@ proxy = f"http://{config.PROXY_USER}:{config.PROXY_PASS}@{config.PROXY_HOST}:{co
 
 proxies = {"http": proxy, "https": proxy}
 
-url = "https://www.spitogatos.gr/search/results/residential/sale/r100/m2007m/propertyType_apartment/onlyImage"
+url = "https://www.spitogatos.gr/pwliseis-katoikies/marousi"
 
 response = requests.get(url, headers=headers, proxies=proxies)
-print("response.status_code:", response.status_code)
+if response.status_code != 200:
+    print("Failed to fetch the page. Status code:", response.status_code)
+    exit(1)
 
 soup = BeautifulSoup(response.content, "html.parser")
+
+apartments = soup.find_all("article", class_="ordered-element")
+
+for apt in apartments:
+    price = (
+        apt.find("div", class_="tile__price").text.strip()
+        if apt.find("div", class_="tile__price")
+        else "No price available"
+    )
+    print("price:", price)
 
 print("The End")
