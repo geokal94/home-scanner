@@ -4,9 +4,11 @@ Telegram alerts for new Greek apartment rentals on **spitogatos.gr**. Scrapes ho
 
 ## Status
 
-Backend MVP complete (see [`docs/superpowers/specs/2026-05-08-home-scanner-portfolio-design.md`](docs/superpowers/specs/2026-05-08-home-scanner-portfolio-design.md) for the full design and [`docs/superpowers/plans/2026-05-08-backend-mvp.md`](docs/superpowers/plans/2026-05-08-backend-mvp.md) for the build plan).
+- **Plan 1 — Backend MVP** complete
+- **Plan 2 — Production deploy** complete (FastAPI service, Dockerfile, Fly.io scale-to-zero, GitHub Actions hourly cron + CI + daily canary, Sentry wiring)
+- **Plan 3 — Next.js frontend** upcoming
 
-Plan 2 (production deploy) and Plan 3 (Next.js frontend) are upcoming.
+See `docs/superpowers/specs/2026-05-08-home-scanner-portfolio-design.md` for the full design and `docs/superpowers/plans/` for the build plans.
 
 ## Local setup
 
