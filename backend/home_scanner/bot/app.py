@@ -4,6 +4,7 @@ from __future__ import annotations
 from sqlalchemy.orm import sessionmaker
 from telegram.ext import Application, CommandHandler
 
+from home_scanner.bot.handlers.new_search import build_handler as build_new_handler
 from home_scanner.bot.handlers.start_help import help_cmd, start
 from home_scanner.settings import Settings
 
@@ -20,6 +21,7 @@ def build_application(*, session_factory: sessionmaker) -> Application:
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
-    # /new, /list, /pause, /resume, /delete added in Tasks 16–18
+    app.add_handler(build_new_handler())
+    # /list, /pause, /resume, /delete added in Tasks 17–18
 
     return app
