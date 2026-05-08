@@ -51,3 +51,9 @@ def freeze_now(monkeypatch: pytest.MonkeyPatch) -> Any:
 
     fixed = datetime(2026, 5, 8, 12, 0, 0, tzinfo=UTC)
     yield fixed
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _create_schema(db_engine: Engine) -> None:
+    from home_scanner.db.models import Base
+    Base.metadata.create_all(db_engine)
