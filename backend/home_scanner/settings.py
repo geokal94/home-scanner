@@ -18,6 +18,11 @@ class Settings:
     database_url: str
     telegram_bot_token: str
     log_level: str = "INFO"
+    # NEW in Plan 2:
+    scrape_secret: str = ""
+    telegram_webhook_secret: str = ""
+    sentry_dsn: str = ""
+    public_base_url: str = ""
 
     def __init__(self) -> None:  # type: ignore[no-redef]
         # frozen dataclass + env-driven init: bypass __setattr__ via object.__setattr__
@@ -28,6 +33,12 @@ class Settings:
         object.__setattr__(self, "database_url", os.environ["DATABASE_URL"])
         object.__setattr__(self, "telegram_bot_token", os.environ["TELEGRAM_BOT_TOKEN"])
         object.__setattr__(self, "log_level", os.environ.get("LOG_LEVEL", "INFO"))
+        object.__setattr__(self, "scrape_secret", os.environ.get("SCRAPE_SECRET", ""))
+        object.__setattr__(
+            self, "telegram_webhook_secret", os.environ.get("TELEGRAM_WEBHOOK_SECRET", "")
+        )
+        object.__setattr__(self, "sentry_dsn", os.environ.get("SENTRY_DSN", ""))
+        object.__setattr__(self, "public_base_url", os.environ.get("PUBLIC_BASE_URL", ""))
 
     @property
     def proxy_url(self) -> str:
