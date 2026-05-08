@@ -3,3 +3,7 @@ config.py
 
 __pycache__/
 .superpowers/
+.env
+backend/.env
+.venv/
+backend/.venv/
