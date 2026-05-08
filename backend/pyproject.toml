@@ -3,7 +3,6 @@ name = "home-scanner"
 version = "0.1.0"
 description = "Telegram alerts for new Greek apartment rentals on spitogatos.gr"
 authors = ["Giorgos Kallis <giorgos.kallis.gr@gmail.com>"]
-readme = "../README.md"
 package-mode = true
 packages = [{include = "home_scanner"}]
 

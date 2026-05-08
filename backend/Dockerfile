@@ -17,7 +17,6 @@ WORKDIR /app
 
 # Install deps first (cached layer)
 COPY pyproject.toml ./
-COPY README.md ../README.md
 RUN poetry install --only main --no-root
 
 # Copy code
