@@ -1,0 +1,35 @@
+# Fly.io config — see https://fly.io/docs/reference/configuration/
+
+app = "home-scanner"
+primary_region = "fra"  # Frankfurt — close to Greek users; pick another if relevant
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # Apply migrations on every deploy
+  release_command = "alembic upgrade head"
+
+[env]
+  PORT = "8080"
+  LOG_LEVEL = "INFO"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/healthz"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
