@@ -29,17 +29,24 @@ def db_engine(postgres_container: PostgresContainer) -> Engine:
 
 @pytest.fixture
 def db_session(db_engine: Engine) -> Generator[Session, None, None]:
-    """A fresh transactional session per test; rolls back at end."""
+    """A fresh session per test; TRUNCATEs all tables at end so commits made by
+    code under test (e.g. bot handlers opening their own sessions) are still
+    cleaned up."""
     SessionLocal = sessionmaker(bind=db_engine, expire_on_commit=False)
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
+    session = SessionLocal()
     try:
         yield session
     finally:
         session.close()
-        transaction.rollback()
-        connection.close()
+        # Clean up: truncate all tables so committed data (from this session or
+        # from other sessions opened during the test) doesn't leak between tests.
+        from home_scanner.db.models import Base
+        with db_engine.begin() as conn:
+            table_names = ", ".join(
+                f'"{t.name}"' for t in reversed(Base.metadata.sorted_tables)
+            )
+            from sqlalchemy import text
+            conn.execute(text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE"))
 
 
 @pytest.fixture
