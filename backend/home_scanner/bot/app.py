@@ -1,4 +1,4 @@
-"""telegram.ext.Application factory. Long-polling in Plan 1; webhook adapter in Plan 2."""
+"""telegram.ext.Application factories. Polling for local dev, webhook for prod."""
 from __future__ import annotations
 
 from sqlalchemy.orm import sessionmaker
@@ -11,16 +11,8 @@ from home_scanner.bot.handlers.start_help import help_cmd, start
 from home_scanner.settings import Settings
 
 
-def build_application(*, session_factory: sessionmaker) -> Application:
-    settings = Settings()
-    app = (
-        Application.builder()
-        .token(settings.telegram_bot_token)
-        .build()
-    )
-    # Stash the session factory in app.bot_data for handlers to grab
+def _register_handlers(app: Application, session_factory: sessionmaker) -> None:
     app.bot_data["session_factory"] = session_factory
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(build_new_handler())
@@ -29,4 +21,22 @@ def build_application(*, session_factory: sessionmaker) -> Application:
     app.add_handler(CommandHandler("resume", resume))
     app.add_handler(CommandHandler("delete", delete))
 
+
+def build_application(*, session_factory: sessionmaker) -> Application:
+    """Polling-mode Application — used by `python -m home_scanner bot` (local dev)."""
+    settings = Settings()
+    app = Application.builder().token(settings.telegram_bot_token).build()
+    _register_handlers(app, session_factory)
+    return app
+
+
+async def build_webhook_application(*, session_factory: sessionmaker) -> Application:
+    """Webhook-mode Application — initialized but NOT polling. The FastAPI
+    /webhook/telegram/<secret> endpoint feeds it updates via app.process_update().
+
+    Caller is responsible for `await app.initialize()` / `await app.shutdown()` —
+    typically wired through FastAPI's lifespan."""
+    settings = Settings()
+    app = Application.builder().token(settings.telegram_bot_token).updater(None).build()
+    _register_handlers(app, session_factory)
     return app
