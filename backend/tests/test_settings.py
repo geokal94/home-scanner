@@ -1,4 +1,5 @@
 import pytest
+
 from home_scanner.settings import Settings
 
 

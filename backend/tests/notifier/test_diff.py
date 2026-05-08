@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from home_scanner.notifier.diff import compute_alerts_to_send

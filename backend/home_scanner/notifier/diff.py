@@ -5,7 +5,8 @@ This module knows nothing about the DB or Telegram — it's deterministic and un
 """
 from __future__ import annotations
 
-from typing import Iterable, Protocol
+from collections.abc import Iterable
+from typing import Protocol
 
 
 class _SavedSearchLike(Protocol):

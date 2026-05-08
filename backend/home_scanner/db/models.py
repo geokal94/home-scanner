@@ -13,7 +13,6 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
     SmallInteger,
     Text,
-    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -42,7 +41,7 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    saved_searches: Mapped[list["SavedSearch"]] = relationship(
+    saved_searches: Mapped[list[SavedSearch]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 

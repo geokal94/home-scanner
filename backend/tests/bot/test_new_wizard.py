@@ -7,11 +7,13 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from sqlalchemy.orm import Session, sessionmaker
+
 from home_scanner.bot.handlers.new_search import (
+    BEDROOMS,
     LOCATION,
     PRICE_MAX,
     PRICE_MIN,
-    BEDROOMS,
     handle_bedrooms,
     handle_location_text,
     handle_price_max,
@@ -19,7 +21,6 @@ from home_scanner.bot.handlers.new_search import (
     start_new,
 )
 from home_scanner.db.repositories import list_user_saved_searches
-from sqlalchemy.orm import sessionmaker, Session
 
 
 def _fake_update(text: str | None = None, chat_id: int = 100):
@@ -105,7 +106,6 @@ async def test_unknown_location_offers_close_matches(db_engine):
 async def test_cold_start_digest_records_existing_matches(db_session: Session, db_engine):
     """Existing listings matching the new search are recorded into alerts_sent
     so the user isn't flooded on the next scrape."""
-    from datetime import UTC, datetime
     from home_scanner.db.repositories import listing_ids_already_alerted, upsert_listing
 
     upsert_listing(

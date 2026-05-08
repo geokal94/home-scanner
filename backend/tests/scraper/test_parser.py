@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 from home_scanner.scraper.parser import parse_listings
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "spitogatos"

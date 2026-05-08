@@ -1,10 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from sqlalchemy.orm import Session, sessionmaker
+
 from home_scanner.bot.handlers.manage import delete, pause, resume
 from home_scanner.db.models import SavedSearch
 from home_scanner.db.repositories import create_saved_search, get_or_create_user
-from sqlalchemy.orm import Session, sessionmaker
 
 
 def _ctx(args: list[str], db_engine):

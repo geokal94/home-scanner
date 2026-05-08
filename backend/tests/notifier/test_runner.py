@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from sqlalchemy.orm import Session
+
 from home_scanner.db.models import ScrapeRun
 from home_scanner.db.repositories import (
     create_saved_search,
@@ -9,7 +11,6 @@ from home_scanner.db.repositories import (
 )
 from home_scanner.notifier.runner import run_one_scrape_cycle
 from home_scanner.scraper.models import ScrapedListing
-from sqlalchemy.orm import Session
 
 
 @pytest.mark.asyncio

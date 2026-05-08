@@ -1,4 +1,3 @@
-import pytest
 from home_scanner.locations import Location, find_locations, load_locations
 
 

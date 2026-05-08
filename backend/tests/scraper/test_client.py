@@ -1,7 +1,8 @@
 import httpx
 import pytest
 import respx
-from home_scanner.scraper.client import SpitogatosClient, ScrapeError
+
+from home_scanner.scraper.client import ScrapeError, SpitogatosClient
 
 
 @pytest.fixture

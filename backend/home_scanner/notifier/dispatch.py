@@ -1,8 +1,8 @@
 """Send Telegram alert messages, record `alerts_sent` rows. Side-effecting."""
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Mapping
 
 import structlog
 from sqlalchemy.orm import Session

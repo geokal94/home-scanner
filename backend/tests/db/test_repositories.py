@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
 
-from home_scanner.db.models import Listing, User
+from sqlalchemy.orm import Session
+
+from home_scanner.db.models import Listing
 from home_scanner.db.repositories import (
     create_saved_search,
     delete_saved_search,
@@ -10,7 +12,6 @@ from home_scanner.db.repositories import (
     set_saved_search_active,
     upsert_listing,
 )
-from sqlalchemy.orm import Session
 
 
 def test_get_or_create_user_idempotent(db_session: Session):
@@ -55,7 +56,7 @@ def test_set_active_and_delete(db_session: Session):
 
 def test_list_active_saved_searches_skips_inactive(db_session: Session):
     u = get_or_create_user(db_session, telegram_chat_id=3, telegram_username=None)
-    s_a = create_saved_search(db_session, user_id=u.id, location_slug="a")
+    create_saved_search(db_session, user_id=u.id, location_slug="a")
     s_b = create_saved_search(db_session, user_id=u.id, location_slug="b")
     db_session.flush()
     set_saved_search_active(db_session, search_id=s_b.id, is_active=False)
@@ -67,15 +68,15 @@ def test_list_active_saved_searches_skips_inactive(db_session: Session):
 
 def test_upsert_listing_inserts_then_updates(db_session: Session):
     now = datetime.now(UTC)
-    listing_data = dict(
-        external_id="ext-1",
-        url="https://x",
-        title="t",
-        price_eur=800,
-        bedrooms=2,
-        area_m2=60,
-        location_text="loc",
-    )
+    listing_data = {
+        "external_id": "ext-1",
+        "url": "https://x",
+        "title": "t",
+        "price_eur": 800,
+        "bedrooms": 2,
+        "area_m2": 60,
+        "location_text": "loc",
+    }
     upsert_listing(db_session, now=now, **listing_data)
     db_session.flush()
 

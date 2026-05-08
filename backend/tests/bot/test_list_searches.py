@@ -1,9 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from sqlalchemy.orm import Session, sessionmaker
+
 from home_scanner.bot.handlers.list_searches import list_searches
 from home_scanner.db.repositories import create_saved_search, get_or_create_user
-from sqlalchemy.orm import Session, sessionmaker
 
 
 @pytest.mark.asyncio

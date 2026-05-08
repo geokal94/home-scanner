@@ -1,7 +1,8 @@
 from datetime import UTC, datetime
 
-from home_scanner.db.models import Listing, SavedSearch, User
 from sqlalchemy.orm import Session
+
+from home_scanner.db.models import Listing, SavedSearch, User
 
 
 def test_user_create(db_session: Session):

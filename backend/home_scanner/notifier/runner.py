@@ -4,9 +4,10 @@ This is the function called by the CLI in Plan 1, and by `/internal/scrape` in P
 """
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Iterable
+from typing import Any
 
 import structlog
 from sqlalchemy.orm import Session
@@ -20,8 +21,8 @@ from home_scanner.db.repositories import (
     upsert_listing,
 )
 from home_scanner.scraper import (
-    ScrapeError,
     ScrapedListing,
+    ScrapeError,
     SearchFilter,
     SpitogatosClient,
 )

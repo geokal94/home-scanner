@@ -6,15 +6,14 @@ to batch.
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from .models import AlertSent, Listing, SavedSearch, User
-
 
 # --- users ---
 

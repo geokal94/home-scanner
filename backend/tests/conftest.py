@@ -31,8 +31,8 @@ def db_session(db_engine: Engine) -> Generator[Session, None, None]:
     """A fresh session per test; TRUNCATEs all tables at end so commits made by
     code under test (e.g. bot handlers opening their own sessions) are still
     cleaned up."""
-    SessionLocal = sessionmaker(bind=db_engine, expire_on_commit=False)
-    session = SessionLocal()
+    session_factory = sessionmaker(bind=db_engine, expire_on_commit=False)
+    session = session_factory()
     try:
         yield session
     finally:

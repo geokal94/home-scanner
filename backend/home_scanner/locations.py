@@ -12,7 +12,7 @@ import yaml
 from rapidfuzz import fuzz, process
 
 _YAML_PATH = Path(__file__).parent / "locations.yml"
-_FUZZ_CUTOFF = 70  # 0–100; below this we report no match
+_FUZZ_CUTOFF = 70  # 0-100; below this we report no match
 
 
 @dataclass(frozen=True, slots=True)

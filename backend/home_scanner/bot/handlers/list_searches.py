@@ -34,9 +34,9 @@ async def list_searches(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     for s in rows:
         bounds = []
         if s.min_price is not None or s.max_price is not None:
-            bounds.append(f"€{s.min_price or '–'}-{s.max_price or '–'}")
+            bounds.append(f"€{s.min_price or '-'}-{s.max_price or '-'}")
         if s.min_bedrooms is not None or s.max_bedrooms is not None:
-            bounds.append(f"{s.min_bedrooms or '–'}-{s.max_bedrooms or '–'} BR")
+            bounds.append(f"{s.min_bedrooms or '-'}-{s.max_bedrooms or '-'} BR")
         status = "active" if s.is_active else "paused"
         bounds_str = ", ".join(bounds) if bounds else "any"
         lines.append(

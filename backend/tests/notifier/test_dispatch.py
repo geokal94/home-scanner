@@ -2,7 +2,8 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import pytest
-from home_scanner.db.models import Listing, SavedSearch, User
+from sqlalchemy.orm import Session
+
 from home_scanner.db.repositories import (
     create_saved_search,
     get_or_create_user,
@@ -10,7 +11,6 @@ from home_scanner.db.repositories import (
     upsert_listing,
 )
 from home_scanner.notifier.dispatch import dispatch_alerts
-from sqlalchemy.orm import Session
 
 
 @pytest.mark.asyncio

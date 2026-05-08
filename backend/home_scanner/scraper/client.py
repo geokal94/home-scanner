@@ -24,7 +24,7 @@ class ScrapeError(Exception):
     """Raised when fetching a Spitogatos URL fails permanently."""
 
 
-class _Transient5xx(Exception):
+class _TransientServerError(Exception):
     """Internal — used to drive tenacity retries on 5xx-but-not-403/429."""
 
 
@@ -36,13 +36,13 @@ class SpitogatosClient:
     def fetch(self, url: str) -> str:
         try:
             return self._fetch_with_retries(url)
-        except (RetryError, _Transient5xx) as exc:
+        except (RetryError, _TransientServerError) as exc:
             raise ScrapeError(f"Exhausted retries fetching {url}") from exc
 
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=4),
-        retry=retry_if_exception_type(_Transient5xx),
+        retry=retry_if_exception_type(_TransientServerError),
         reraise=True,
     )
     def _fetch_with_retries(self, url: str) -> str:
@@ -52,7 +52,7 @@ class SpitogatosClient:
             resp = client.get(url)
 
         if 500 <= resp.status_code < 600:
-            raise _Transient5xx(f"{resp.status_code} from {url}")
+            raise _TransientServerError(f"{resp.status_code} from {url}")
         if resp.status_code in (403, 429):
             raise ScrapeError(f"{resp.status_code} from {url} — bot detection")
         if resp.status_code != 200:
