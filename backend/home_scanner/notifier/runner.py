@@ -77,6 +77,13 @@ async def run_one_scrape_cycle(
             summary.errors["failed"][search.location_slug] = str(exc)
             continue
 
+        if not scraped:
+            # 200 OK + zero parsed listings → almost certainly a Spitogatos layout
+            # change broke our selectors. The "#1 maintenance risk" canary per spec §8.
+            log.warning("runner.zero_listings_on_200", slug=search.location_slug)
+            summary.errors["failed"][search.location_slug] = "zero_listings_on_200"
+            continue
+
         summary.listings_seen += len(scraped)
 
         # Upsert listings, then re-query DB-side matches (handles previously-seen ones too)
