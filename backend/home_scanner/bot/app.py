@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from telegram.ext import Application, CommandHandler
 
 from home_scanner.bot.handlers.list_searches import list_searches
+from home_scanner.bot.handlers.manage import delete, pause, resume
 from home_scanner.bot.handlers.new_search import build_handler as build_new_handler
 from home_scanner.bot.handlers.start_help import help_cmd, start
 from home_scanner.settings import Settings
@@ -24,6 +25,8 @@ def build_application(*, session_factory: sessionmaker) -> Application:
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(build_new_handler())
     app.add_handler(CommandHandler("list", list_searches))
-    # /pause, /resume, /delete added in Task 18
+    app.add_handler(CommandHandler("pause", pause))
+    app.add_handler(CommandHandler("resume", resume))
+    app.add_handler(CommandHandler("delete", delete))
 
     return app
