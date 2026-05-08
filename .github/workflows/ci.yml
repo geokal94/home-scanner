@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry==1.8.5
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml') }}
+
+      - name: Install deps
+        working-directory: backend
+        run: poetry install --no-root
+
+      - name: Lint
+        working-directory: backend
+        run: poetry run ruff check .
+
+      - name: Test
+        working-directory: backend
+        env:
+          DATAIMPULSE_USER: ci
+          DATAIMPULSE_PASS: ci
+          DATAIMPULSE_HOST: localhost
+          DATAIMPULSE_PORT: "1080"
+          DATABASE_URL: postgresql+psycopg://placeholder/placeholder
+          TELEGRAM_BOT_TOKEN: ci-test-token
+        run: poetry run pytest -v
