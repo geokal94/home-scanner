@@ -18,7 +18,7 @@ def build_router(session_factory) -> APIRouter:  # type: ignore[no-untyped-def]
     r = APIRouter()
 
     @r.get("/healthz")
-    def healthz(session: Session = Depends(get_session)) -> dict[str, Any]:  # noqa: B008
+    def healthz(session: Session = Depends(get_session)) -> dict[str, Any]:
         last_run = session.scalar(
             select(ScrapeRun).order_by(ScrapeRun.started_at.desc()).limit(1)
         )

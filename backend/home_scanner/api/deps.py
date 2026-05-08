@@ -25,7 +25,7 @@ def make_get_session(session_factory: sessionmaker):
 
 def require_scrape_secret(
     authorization: Annotated[str | None, Header()] = None,
-    settings: Settings = Depends(get_settings),  # noqa: B008
+    settings: Settings = Depends(get_settings),
 ) -> None:
     """401 unless `Authorization: Bearer <SCRAPE_SECRET>` header matches."""
     if not settings.scrape_secret:
