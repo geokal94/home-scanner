@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from sqlalchemy.orm import sessionmaker
 
 from home_scanner.api.healthz import build_router as build_healthz_router
+from home_scanner.api.listings import build_router as build_listings_router
 from home_scanner.observability import init_sentry
 from home_scanner.settings import Settings
 
@@ -27,4 +28,5 @@ def build_app(*, session_factory: sessionmaker) -> FastAPI:
     app.state.session_factory = session_factory
 
     app.include_router(build_healthz_router(session_factory))
+    app.include_router(build_listings_router(session_factory))
     return app
