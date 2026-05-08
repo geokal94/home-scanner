@@ -1,0 +1,54 @@
+# Greek apartment search locations → spitogatos.gr URL slugs.
+# Add entries via PR. Slug must match the trailing path segment in the spitogatos URL.
+
+# Major cities
+- name: "Athens"
+  aliases: ["athina", "αθήνα"]
+  slug: "athens"
+- name: "Athens Centre"
+  aliases: ["athens center", "athina kentro", "kentro athinas", "αθήνα κέντρο"]
+  slug: "athina-kentro"
+- name: "Thessaloniki"
+  aliases: ["thessaloniki", "θεσσαλονίκη"]
+  slug: "thessaloniki"
+- name: "Thessaloniki Centre"
+  aliases: ["thessaloniki kentro", "θεσσαλονίκη κέντρο"]
+  slug: "thessaloniki-kentro"
+- name: "Patras"
+  aliases: ["patra", "πάτρα"]
+  slug: "patra"
+- name: "Heraklion"
+  aliases: ["iraklio", "ηράκλειο"]
+  slug: "iraklio"
+- name: "Larissa"
+  aliases: ["larisa", "λάρισα"]
+  slug: "larisa"
+
+# Athens neighbourhoods (sample seed; extend as needed)
+- name: "Marousi"
+  aliases: ["maroussi", "μαρούσι"]
+  slug: "marousi"
+- name: "Nea Smyrni"
+  aliases: ["nea smirni", "νέα σμύρνη"]
+  slug: "nea-smyrni"
+- name: "Kallithea"
+  aliases: ["kallithéa", "καλλιθέα"]
+  slug: "kallithea"
+- name: "Pagrati"
+  aliases: ["pangrati", "παγκράτι"]
+  slug: "pagrati"
+- name: "Exarcheia"
+  aliases: ["exarchia", "εξάρχεια"]
+  slug: "exarcheia"
+- name: "Koukaki"
+  aliases: ["κουκάκι"]
+  slug: "koukaki"
+- name: "Kolonaki"
+  aliases: ["κολωνάκι"]
+  slug: "kolonaki"
+- name: "Glyfada"
+  aliases: ["glifada", "γλυφάδα"]
+  slug: "glyfada"
+- name: "Piraeus"
+  aliases: ["pireas", "πειραιάς"]
+  slug: "pireas"
