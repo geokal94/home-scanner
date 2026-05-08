@@ -1,0 +1,23 @@
+name: hourly-scrape
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # Top of every hour
+  workflow_dispatch:      # Manual trigger button in the Actions UI
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger /internal/scrape
+        env:
+          APP_URL: ${{ secrets.APP_URL }}              # e.g. https://home-scanner.fly.dev
+          SCRAPE_SECRET: ${{ secrets.SCRAPE_SECRET }}
+        run: |
+          set -euo pipefail
+          response=$(curl -fsS \
+            -X POST "$APP_URL/internal/scrape" \
+            -H "Authorization: Bearer $SCRAPE_SECRET" \
+            -w "\nHTTP %{http_code}\n")
+          echo "$response"
