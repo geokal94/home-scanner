@@ -6,7 +6,6 @@ Tests that don't need a DB simply don't request the `db_session` fixture.
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import Any
 
 import pytest
 from sqlalchemy import create_engine
@@ -47,17 +46,6 @@ def db_session(db_engine: Engine) -> Generator[Session, None, None]:
             )
             from sqlalchemy import text
             conn.execute(text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE"))
-
-
-@pytest.fixture
-def freeze_now(monkeypatch: pytest.MonkeyPatch) -> Any:
-    """Freeze datetime.utcnow / now() in tests via the project's clock helper."""
-    # The project uses home_scanner.clock.now() everywhere; we'll patch it here once
-    # the clock module exists. For now this is a placeholder used by future tests.
-    from datetime import UTC, datetime
-
-    fixed = datetime(2026, 5, 8, 12, 0, 0, tzinfo=UTC)
-    yield fixed
 
 
 @pytest.fixture(scope="session", autouse=True)
