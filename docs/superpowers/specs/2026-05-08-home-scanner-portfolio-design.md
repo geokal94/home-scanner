@@ -341,3 +341,42 @@ The current state is a single `main.py` with hardcoded Marousi URL, gitignored `
 4. Replace `black + flake8` with `ruff` in `pyproject.toml`.
 
 This is greenfield in everything but the parser core — most of `main.py` is preserved as the seed of `scraper/`.
+
+---
+
+## Addendum (2026-05-11) — Source pivoted from spitogatos.gr to xe.gr
+
+After Plan 2 deployed, the first live scrape returned `"zero_listings_on_200"` against spitogatos.gr. Root cause: Spitogatos uses F5 BIG-IP / Reese84 TLS+HTTP fingerprinting and serves a hydrated-by-JS Vue shell to non-browser clients. The DataImpulse residential proxy passed the IP-reputation check but the request fingerprint at the protocol level was rejected.
+
+### Options evaluated
+
+| | Cost | Effort | Verdict |
+|---|---|---|---|
+| Playwright (headless Chromium) | needs 512 MB Fly VM (~$2/mo more), Chromium adds 200 MB to image, 5–15 s per scrape | high | overbuilt for the data we need |
+| Third-party scraping API (Apify/ScrapingBee/Bright Data Web Unlocker) | ~$5–50/mo at our volume | low code | "outsourced engineering" — wrong portfolio signal |
+| `curl_cffi` (TLS-impersonating client) | $0 | ~30 min | fragile when defenders update fingerprints; viable fallback |
+| **Pivot to xe.gr** | $0; drops DataImpulse | ~1–2 hr | clean SSR HTML, no WAF, explicit bedroom data per card |
+
+### Decision
+
+Pivoted to xe.gr. Trade-offs accepted:
+
+- xe.gr has no public read API either — both providers require scraping. xe.gr's developer API is write-only for agencies posting listings.
+- Location identifiers change from URL slugs (spitogatos) to Google Place IDs (xe.gr). `SavedSearch.location_slug` column kept its name; semantics now "the identifier we use for this location with the upstream source." `locations.yml` documents this.
+- DataImpulse proxy becomes optional infrastructure (Settings fields kept, made non-required) for if we ever re-add spitogatos as a second source.
+
+### What changed
+
+- `scraper/parser.py` rewritten against real xe.gr HTML (fixture: `tests/fixtures/xe/thessaloniki-page1.html`). The `common-ad`/`property-ad-*` class taxonomy replaced spitogatos's `tile__*`. Bedroom count is now parsed directly from `<i class="xe-bedroom"></i><span>×N</span>` rather than inferred from title strings.
+- `scraper/search_url.py` rewritten to build xe.gr URLs (`?item_type=re_residence&transaction_name=rent&geo_place_ids[]=<place_id>`). Price/bedroom filtering moved from URL params to DB-side post-scrape — xe.gr's filter param contract is undocumented and we don't want to depend on it.
+- `scraper/client.py` renamed `SpitogatosClient` → `ListingClient`. Referer header switched to xe.gr.
+- `locations.yml` rewritten with Google Place IDs for 14 major Greek areas. Process documented in README for adding more.
+- `Settings`: DataImpulse env vars demoted from required to optional. `proxy_url` returns `None` when not configured.
+
+### Risk update (replaces §11 row 1)
+
+| Risk | Mitigation |
+|---|---|
+| ~~Spitogatos changes HTML and breaks parser~~ → **xe.gr changes HTML and breaks parser** | Same daily live canary catches it within 24h; canary URL updated to xe.gr's Thessaloniki rental search. |
+
+The §8 zero-listings-on-200 canary detector worked exactly as designed — it caught the spitogatos block on the first live scrape, and the same detector would catch a future xe.gr markup change.
