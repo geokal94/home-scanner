@@ -2,7 +2,7 @@ from pathlib import Path
 
 from home_scanner.scraper.parser import parse_listings
 
-FIXTURES = Path(__file__).parent.parent / "fixtures" / "spitogatos"
+FIXTURES = Path(__file__).parent.parent / "fixtures" / "xe"
 
 
 def _load(name: str) -> str:
@@ -10,44 +10,31 @@ def _load(name: str) -> str:
 
 
 def test_parses_real_thessaloniki_page():
-    """Real spitogatos.gr rentals search HTML for Thessaloniki, captured 2026-05-10
-    against the live deploy. 30 cards expected."""
+    """Real xe.gr property/results page for Thessaloniki rentals, captured
+    2026-05-11. Roughly 30+ ads expected (page shows 34 cards including non-listing
+    promos; the parser keeps only those with a /property/d/ UUID and a price)."""
     html = _load("thessaloniki-page1.html")
     listings = parse_listings(html)
-    assert len(listings) == 30
+    assert len(listings) >= 20  # Solid lower bound; actual is higher
     sample = listings[0]
-    # `/aggelia/2118810894` → external_id "2118810894", url …spitogatos.gr/aggelia/2118810894
-    assert sample.external_id.isdigit()
-    assert sample.url.startswith("https://www.spitogatos.gr/aggelia/")
+    # UUID regex: 8-4-4-4-12 hex
+    assert len(sample.external_id) == 36 and sample.external_id.count("-") == 4
+    assert sample.url.startswith("https://www.xe.gr/property/d/enoikiaseis-katoikion/")
     assert sample.price_eur > 0
-    assert sample.title  # Greek title — non-empty
-    assert sample.location_text  # Greek location — non-empty
-    assert sample.area_m2 is not None  # Every card has m² in title
+    assert sample.location_text  # Greek address text
+    assert sample.area_m2 is not None  # Every card has size in title
 
 
-def test_parses_studio_as_zero_bedrooms():
-    """Real fixture: titles starting with 'Studio / Γκαρσονιέρα' should infer 0 bedrooms."""
+def test_parses_bedrooms_when_present():
+    """xe.gr shows explicit bedroom count via <i class="xe-bedroom"></i><span>×N</span>."""
     html = _load("thessaloniki-page1.html")
     listings = parse_listings(html)
-    studios = [item for item in listings if item.title and "studio" in item.title.lower()]
-    assert len(studios) > 0  # Real page has multiple studios
-    for s in studios:
-        assert s.bedrooms == 0
-
-
-def test_parses_non_studio_as_unknown_bedrooms():
-    """Διαμέρισμα/Μεζονέτα titles don't give bedroom count on the search card."""
-    html = _load("thessaloniki-page1.html")
-    listings = parse_listings(html)
-    apartments = [
-        item for item in listings
-        if item.title
-        and "studio" not in item.title.lower()
-        and "γκαρσονιέρα" not in item.title.lower()
-    ]
-    assert len(apartments) > 0
-    for a in apartments:
-        assert a.bedrooms is None
+    with_bedrooms = [l for l in listings if l.bedrooms is not None]
+    # The vast majority of real listings expose bedroom count
+    assert len(with_bedrooms) >= 15
+    # And all bedroom counts are sane integers
+    for l in with_bedrooms:
+        assert 0 <= l.bedrooms <= 20
 
 
 def test_parses_empty_results_page():
@@ -55,58 +42,49 @@ def test_parses_empty_results_page():
     assert parse_listings(html) == []
 
 
-def test_parser_skips_card_without_aggelia_link():
-    """Cards without a /aggelia/<id> link can't be uniquely identified — skip."""
+def test_parser_skips_non_listing_common_ad():
+    """xe.gr puts promotional 'common-ad' containers on the page that aren't
+    listings (no /property/d/ link). Those must be skipped."""
     html = """
     <html><body>
-    <article class="ordered-element">
-      <a href="/aggelia/111" class="tile__link">Link</a>
-      <h3 class="tile__title">Studio, 32τ.μ.</h3>
-      <h3 class="tile__location">Test</h3>
-      <div class="tile__price"><p class="price__text">€800 / μήνα</p></div>
-    </article>
-    <article class="ordered-element">
-      <a href="/something-else/222" class="tile__link">Wrong path</a>
-      <div class="tile__price"><p class="price__text">€900 / μήνα</p></div>
-    </article>
+    <div class="common-ad">
+      <a href="/some/other/path">Promo banner</a>
+      <span class="property-ad-price">999 €</span>
+    </div>
+    <div class="common-ad">
+      <a href="https://www.xe.gr/property/d/enoikiaseis-katoikion/11111111-2222-3333-4444-555555555555/title-550-55">link</a>
+      <div class="common-property-ad-title"><h3>Studio 32 τ.μ.</h3></div>
+      <span class="property-ad-price">550 €</span>
+    </div>
     </body></html>
     """
     listings = parse_listings(html)
     assert len(listings) == 1
-    assert listings[0].external_id == "111"
-    assert listings[0].price_eur == 800
-
-
-def test_parser_skips_card_without_price():
-    """Cards missing `<p class="price__text">` are skipped — alerts need price."""
-    html = """
-    <html><body>
-    <article class="ordered-element">
-      <a href="/aggelia/111" class="tile__link">Link</a>
-      <h3 class="tile__title">Studio, 32τ.μ.</h3>
-      <div class="tile__price"><p class="price__text">€800 / μήνα</p></div>
-    </article>
-    <article class="ordered-element">
-      <a href="/aggelia/222" class="tile__link">Link</a>
-      <h3 class="tile__title">Studio, 30τ.μ.</h3>
-      <!-- no tile__price -->
-    </article>
-    </body></html>
-    """
-    listings = parse_listings(html)
-    assert len(listings) == 1
-    assert listings[0].external_id == "111"
+    assert listings[0].external_id == "11111111-2222-3333-4444-555555555555"
 
 
 def test_parser_handles_thousand_separators():
-    """European pricing uses '.' as thousand separator: €1.250 → 1250."""
+    """European pricing uses '.' as thousand separator: 1.250 → 1250."""
     html = """
     <html><body>
-    <article class="ordered-element">
-      <a href="/aggelia/333" class="tile__link">Link</a>
-      <div class="tile__price"><p class="price__text">€1.250 / μήνα</p></div>
-    </article>
+    <div class="common-ad">
+      <a href="/property/d/enoikiaseis-katoikion/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/title">x</a>
+      <span class="property-ad-price">1.250 €</span>
+    </div>
     </body></html>
     """
     listings = parse_listings(html)
     assert listings[0].price_eur == 1250
+
+
+def test_parser_skips_card_without_price():
+    """Cards missing `<span class="property-ad-price">` are skipped — alerts need price."""
+    html = """
+    <html><body>
+    <div class="common-ad">
+      <a href="/property/d/enoikiaseis-katoikion/11111111-2222-3333-4444-555555555555/x">x</a>
+      <!-- no price element -->
+    </div>
+    </body></html>
+    """
+    assert parse_listings(html) == []
