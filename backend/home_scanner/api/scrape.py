@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from home_scanner.api.deps import make_get_session, require_scrape_secret
 from home_scanner.bot.app import build_application
 from home_scanner.notifier.runner import run_one_scrape_cycle
-from home_scanner.scraper import SpitogatosClient, scrape_search
+from home_scanner.scraper import ListingClient, scrape_search
 from home_scanner.settings import Settings
 
 log = structlog.get_logger(__name__)
@@ -29,7 +29,7 @@ def build_router(session_factory) -> APIRouter:  # type: ignore[no-untyped-def]
     async def trigger_scrape(session: Session = Depends(get_session)) -> dict[str, Any]:
         settings = Settings()
         app = build_application(session_factory=session_factory)
-        client = SpitogatosClient(proxy_url=settings.proxy_url)
+        client = ListingClient(proxy_url=settings.proxy_url)
 
         summary = await run_one_scrape_cycle(
             session=session,

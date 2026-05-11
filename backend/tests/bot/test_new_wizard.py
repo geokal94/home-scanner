@@ -57,11 +57,11 @@ async def test_full_happy_path_creates_saved_search(db_session: Session, db_engi
     sf = sessionmaker(bind=db_engine, expire_on_commit=False)
     ctx_user_data: dict = {}
 
-    update = _fake_update(text="Marousi")
+    update = _fake_update(text="Thessaloniki")
     ctx = _fake_context(sf, ctx_user_data)
     next_state = await handle_location_text(update, ctx)
     assert next_state == PRICE_MIN
-    assert ctx_user_data["location_slug"] == "marousi"
+    assert ctx_user_data["location_slug"] == "ChIJ7eAoFPQ4qBQRqXTVuBXnugk"
 
     update = _fake_update(text="600")
     next_state = await handle_price_min(update, ctx)
@@ -86,7 +86,7 @@ async def test_full_happy_path_creates_saved_search(db_session: Session, db_engi
         rows = list_user_saved_searches(verify_session, user_id=u.id)
         assert len(rows) == 1
         s = rows[0]
-        assert s.location_slug == "marousi"
+        assert s.location_slug == "ChIJ7eAoFPQ4qBQRqXTVuBXnugk"
         assert s.min_price == 600 and s.max_price == 1200
         assert s.min_bedrooms == 2 and s.max_bedrooms == 2
         verify_session.rollback()
@@ -118,7 +118,7 @@ async def test_cold_start_digest_records_existing_matches(db_session: Session, d
     sf = sessionmaker(bind=db_engine, expire_on_commit=False)
     ctx_user_data: dict = {}
 
-    update = _fake_update(text="Marousi")
+    update = _fake_update(text="Thessaloniki")
     ctx = _fake_context(sf, ctx_user_data)
     await handle_location_text(update, ctx)
     await handle_price_min(_fake_update(text="skip"), ctx)

@@ -26,15 +26,15 @@ def test_parses_real_thessaloniki_page():
 
 
 def test_parses_bedrooms_when_present():
-    """xe.gr shows explicit bedroom count via <i class="xe-bedroom"></i><span>×N</span>."""
+    """xe.gr shows explicit bedroom count via xe-bedroom icon + count span."""
     html = _load("thessaloniki-page1.html")
     listings = parse_listings(html)
-    with_bedrooms = [l for l in listings if l.bedrooms is not None]
+    with_bedrooms = [item for item in listings if item.bedrooms is not None]
     # The vast majority of real listings expose bedroom count
     assert len(with_bedrooms) >= 15
     # And all bedroom counts are sane integers
-    for l in with_bedrooms:
-        assert 0 <= l.bedrooms <= 20
+    for item in with_bedrooms:
+        assert 0 <= item.bedrooms <= 20
 
 
 def test_parses_empty_results_page():

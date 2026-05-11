@@ -1,3 +1,4 @@
+# ruff: noqa: RUF002, RUF003  # Greek + × characters are intentional in docstrings/comments
 """Parse xe.gr rental search results into ScrapedListing rows.
 
 Selectors target the current xe.gr property-results markup. When xe.gr changes

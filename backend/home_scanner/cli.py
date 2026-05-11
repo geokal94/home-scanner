@@ -19,7 +19,7 @@ from home_scanner.db.session import make_engine, make_session_factory
 from home_scanner.logging import configure as configure_logging
 from home_scanner.logging import new_correlation_id
 from home_scanner.notifier.runner import run_one_scrape_cycle
-from home_scanner.scraper import SpitogatosClient, scrape_search
+from home_scanner.scraper import ListingClient, scrape_search
 from home_scanner.settings import Settings
 
 
@@ -29,7 +29,7 @@ async def _scrape_once() -> None:
     engine = make_engine(settings.database_url)
     sf = make_session_factory(engine)
     app = build_application(session_factory=sf)
-    client = SpitogatosClient(proxy_url=settings.proxy_url)
+    client = ListingClient(proxy_url=settings.proxy_url)
     with sf() as session:
         await run_one_scrape_cycle(
             session=session,

@@ -1,4 +1,8 @@
-"""HTTP client for Spitogatos via DataImpulse, with retry policy."""
+"""HTTP client for fetching listing pages, with retry policy.
+
+Targets xe.gr today; proxy support is preserved (via `proxy_url=`) for future
+sources that need a residential IP.
+"""
 from __future__ import annotations
 
 import httpx
@@ -12,23 +16,27 @@ from tenacity import (
 
 _DEFAULT_HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) "
-        "Gecko/20100101 Firefox/120.0"
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
     ),
-    "Accept-Language": "en-US,en;q=0.5",
-    "Referer": "https://www.spitogatos.gr/",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "el-GR,el;q=0.9,en;q=0.8",
+    "Referer": "https://www.xe.gr/",
 }
 
 
 class ScrapeError(Exception):
-    """Raised when fetching a Spitogatos URL fails permanently."""
+    """Raised when fetching a listing URL fails permanently."""
 
 
 class _TransientServerError(Exception):
-    """Internal — used to drive tenacity retries on 5xx-but-not-403/429."""
+    """Internal — drives tenacity retries on 5xx (not on 403/429)."""
 
 
-class SpitogatosClient:
+class ListingClient:
+    """Thin wrapper around `httpx.Client` with retry-on-5xx and configurable proxy."""
+
     def __init__(self, proxy_url: str | None = None, timeout: float = 30.0) -> None:
         self._proxy_url = proxy_url
         self._timeout = timeout
@@ -47,7 +55,10 @@ class SpitogatosClient:
     )
     def _fetch_with_retries(self, url: str) -> str:
         with httpx.Client(
-            proxy=self._proxy_url, headers=_DEFAULT_HEADERS, timeout=self._timeout
+            proxy=self._proxy_url,
+            headers=_DEFAULT_HEADERS,
+            timeout=self._timeout,
+            follow_redirects=True,
         ) as client:
             resp = client.get(url)
 

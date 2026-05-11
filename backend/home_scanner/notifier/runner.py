@@ -21,10 +21,10 @@ from home_scanner.db.repositories import (
     upsert_listing,
 )
 from home_scanner.scraper import (
+    ListingClient,
     ScrapedListing,
     ScrapeError,
     SearchFilter,
-    SpitogatosClient,
 )
 
 from .diff import compute_alerts_to_send
@@ -49,7 +49,7 @@ async def run_one_scrape_cycle(
     session: Session,
     bot: Bot,
     scrape_search_fn: ScrapeFn,
-    client: SpitogatosClient | None = None,
+    client: ListingClient | None = None,
     now: datetime,
 ) -> RunSummary:
     summary = RunSummary()
