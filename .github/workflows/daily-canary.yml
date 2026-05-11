@@ -26,10 +26,6 @@ jobs:
       - name: Run canary
         working-directory: backend
         env:
-          DATAIMPULSE_USER: ${{ secrets.DATAIMPULSE_USER }}
-          DATAIMPULSE_PASS: ${{ secrets.DATAIMPULSE_PASS }}
-          DATAIMPULSE_HOST: ${{ secrets.DATAIMPULSE_HOST }}
-          DATAIMPULSE_PORT: ${{ secrets.DATAIMPULSE_PORT }}
           DATABASE_URL: postgresql+psycopg://placeholder:placeholder@localhost/placeholder
           TELEGRAM_BOT_TOKEN: placeholder
         run: poetry run python scripts/canary.py
@@ -43,7 +39,7 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `[canary] Spitogatos parser broken on ${today}`,
-              body: `Daily canary failed: parser returned fewer than ${10} listings for athina-kentro.\n\nSpitogatos HTML may have changed. Investigate \`backend/home_scanner/scraper/parser.py\`.\n\nLog: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              title: `[canary] xe.gr parser broken on ${today}`,
+              body: `Daily canary failed: parser returned fewer than ${10} listings for the Thessaloniki rentals reference search.\n\nxe.gr HTML may have changed. Investigate \`backend/home_scanner/scraper/parser.py\`.\n\nLog: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
               labels: ['canary', 'bug'],
             });
