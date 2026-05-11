@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import sessionmaker
 
 from home_scanner.api.healthz import build_router as build_healthz_router
@@ -40,6 +41,16 @@ def build_app(*, session_factory: sessionmaker) -> FastAPI:
 
     app = FastAPI(title="home-scanner", lifespan=lifespan)
     app.state.session_factory = session_factory
+
+    if settings.cors_origins_list:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.cors_origins_list,
+            allow_origin_regex=r"https://home-scanner-[a-z0-9-]+-[a-z0-9-]+\.vercel\.app",
+            allow_methods=["GET"],
+            allow_headers=["*"],
+            allow_credentials=False,
+        )
 
     app.include_router(build_healthz_router(session_factory))
     app.include_router(build_listings_router(session_factory))

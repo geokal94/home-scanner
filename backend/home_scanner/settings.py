@@ -25,6 +25,7 @@ class Settings:
     telegram_webhook_secret: str = ""
     sentry_dsn: str = ""
     public_base_url: str = ""
+    cors_origins: str = ""  # comma-separated list of allowed origins
 
     def __init__(self) -> None:  # type: ignore[no-redef]
         # frozen dataclass + env-driven init: bypass __setattr__ via object.__setattr__
@@ -41,6 +42,7 @@ class Settings:
         )
         object.__setattr__(self, "sentry_dsn", os.environ.get("SENTRY_DSN", ""))
         object.__setattr__(self, "public_base_url", os.environ.get("PUBLIC_BASE_URL", ""))
+        object.__setattr__(self, "cors_origins", os.environ.get("CORS_ORIGINS", ""))
 
     @property
     def proxy_url(self) -> str | None:
@@ -60,3 +62,8 @@ class Settings:
             f"http://{self.dataimpulse_user}:{self.dataimpulse_pass}"
             f"@{self.dataimpulse_host}:{self.dataimpulse_port}"
         )
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS_ORIGINS env var (comma-separated) into a list. Empty → []."""
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
