@@ -1,54 +1,49 @@
-# Greek apartment search locations → spitogatos.gr URL slugs.
-# Add entries via PR. Slug must match the trailing path segment in the spitogatos URL.
+# Greek apartment search locations.
+#
+# `slug` here holds the **Google Place ID** that xe.gr uses in its
+# `geo_place_ids[]` query parameter. To add a new location: search for it at
+# https://www.xe.gr/property/results?item_type=re_residence&transaction_name=rent
+# and copy the Place ID from the resulting URL.
 
 # Major cities
 - name: "Athens"
   aliases: ["athina", "αθήνα"]
-  slug: "athens"
-- name: "Athens Centre"
-  aliases: ["athens center", "athina kentro", "kentro athinas", "αθήνα κέντρο"]
-  slug: "athina-kentro"
+  slug: "ChIJ8UNwBh-9oRQR3Y1mdkU1Nic"
 - name: "Thessaloniki"
   aliases: ["thessaloniki", "θεσσαλονίκη"]
-  slug: "thessaloniki"
-- name: "Thessaloniki Centre"
-  aliases: ["thessaloniki kentro", "θεσσαλονίκη κέντρο"]
-  slug: "thessaloniki-kentro"
+  slug: "ChIJ7eAoFPQ4qBQRqXTVuBXnugk"
 - name: "Patras"
   aliases: ["patra", "πάτρα"]
-  slug: "patra"
-- name: "Heraklion"
-  aliases: ["iraklio", "ηράκλειο"]
-  slug: "iraklio"
+  slug: "ChIJLe0kpZk1XhMRoIy54iy9AAQ"
 - name: "Larissa"
   aliases: ["larisa", "λάρισα"]
-  slug: "larisa"
+  slug: "ChIJN86P3FaIWBMREMS54iy9AAM"
+- name: "Kalamata"
+  aliases: ["kalamáta", "καλαμάτα"]
+  slug: "ChIJKXhLYpmwYRMRnl9ice2VH_w"
+- name: "Trikala"
+  aliases: ["trikala", "τρίκαλα"]
+  slug: "ChIJXy53IjMZWRMRwJ-54iy9AAQ"
+- name: "Chalkida"
+  aliases: ["chalkida", "halkida", "χαλκίδα"]
+  slug: "ChIJSxfWwksWoRQRBMk0e18KCzg"
 
-# Athens neighbourhoods (sample seed; extend as needed)
-- name: "Marousi"
-  aliases: ["maroussi", "μαρούσι"]
-  slug: "marousi"
-- name: "Nea Smyrni"
-  aliases: ["nea smirni", "νέα σμύρνη"]
-  slug: "nea-smyrni"
-- name: "Kallithea"
-  aliases: ["kallithéa", "καλλιθέα"]
-  slug: "kallithea"
-- name: "Pagrati"
-  aliases: ["pangrati", "παγκράτι"]
-  slug: "pagrati"
-- name: "Exarcheia"
-  aliases: ["exarchia", "εξάρχεια"]
-  slug: "exarcheia"
-- name: "Koukaki"
-  aliases: ["κουκάκι"]
-  slug: "koukaki"
-- name: "Kolonaki"
-  aliases: ["κολωνάκι"]
-  slug: "kolonaki"
-- name: "Glyfada"
-  aliases: ["glifada", "γλυφάδα"]
-  slug: "glyfada"
+# Athens-metro municipalities
 - name: "Piraeus"
   aliases: ["pireas", "πειραιάς"]
-  slug: "pireas"
+  slug: "ChIJRzGst-u7oRQR9_0w_5XaINg"
+- name: "Peristeri"
+  aliases: ["peristeri", "περιστέρι"]
+  slug: "ChIJTazECEejoRQRYRYsuxSJ348"
+- name: "Aigaleo"
+  aliases: ["aigaleo", "αιγάλεω"]
+  slug: "ChIJvUGcxaS8oRQRhQVsOC1EXzw"
+- name: "Ilion"
+  aliases: ["ilion", "ίλιον"]
+  slug: "ChIJZfP8CqijoRQRoHm54iy9AAQ"
+- name: "Petroupoli"
+  aliases: ["petroupoli", "πετρούπολη"]
+  slug: "ChIJ46nkZnejoRQRhcY8oQ1xtI4"
+- name: "Chaidari"
+  aliases: ["chaidari", "haidari", "χαϊδάρι"]
+  slug: "ChIJIZwoz9W6oRQREHu54iy9AAQ"

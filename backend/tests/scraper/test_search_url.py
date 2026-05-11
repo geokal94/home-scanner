@@ -1,29 +1,50 @@
+from urllib.parse import parse_qs, urlparse
+
 from home_scanner.scraper.models import SearchFilter
 from home_scanner.scraper.search_url import build_search_url
 
-
-def test_minimal_filter_uses_location_only():
-    f = SearchFilter(location_slug="marousi")
-    assert build_search_url(f) == "https://www.spitogatos.gr/enoikiaseis-katoikies/marousi"
+# Stable Google Place ID for Thessaloniki on xe.gr.
+PLACE_ID_THESSALONIKI = "ChIJ7eAoFPQ4qBQRqXTVuBXnugk"
 
 
-def test_with_price_range():
-    f = SearchFilter(location_slug="athina-kentro", min_price=600, max_price=1200)
+def test_url_targets_xe_rental_results():
+    f = SearchFilter(location_slug=PLACE_ID_THESSALONIKI)
     url = build_search_url(f)
-    assert url.startswith("https://www.spitogatos.gr/enoikiaseis-katoikies/athina-kentro?")
-    assert "priceMin=600" in url
-    assert "priceMax=1200" in url
+    parsed = urlparse(url)
+    assert parsed.scheme == "https"
+    assert parsed.netloc == "www.xe.gr"
+    assert parsed.path == "/property/results"
 
 
-def test_with_bedrooms_range():
-    f = SearchFilter(location_slug="thessaloniki", min_bedrooms=2, max_bedrooms=3)
+def test_url_includes_required_filters():
+    f = SearchFilter(location_slug=PLACE_ID_THESSALONIKI)
     url = build_search_url(f)
-    assert "bedroomsMin=2" in url
-    assert "bedroomsMax=3" in url
+    qs = parse_qs(urlparse(url).query)
+    assert qs["item_type"] == ["re_residence"]
+    assert qs["transaction_name"] == ["rent"]
+    assert qs["geo_place_ids[]"] == [PLACE_ID_THESSALONIKI]
 
 
-def test_only_min_bound():
-    f = SearchFilter(location_slug="marousi", min_price=800)
+def test_url_ignores_price_and_bedroom_filters():
+    """Price and bedrooms are intentionally filtered DB-side, not via URL.
+    Passing them should not change the URL — the upstream filter param contract
+    on xe.gr is unstable, so we don't depend on it."""
+    f = SearchFilter(
+        location_slug=PLACE_ID_THESSALONIKI,
+        min_price=600,
+        max_price=1200,
+        min_bedrooms=2,
+        max_bedrooms=3,
+    )
     url = build_search_url(f)
-    assert "priceMin=800" in url
-    assert "priceMax" not in url
+    qs = parse_qs(urlparse(url).query)
+    assert "minimum_price" not in qs
+    assert "maximum_price" not in qs
+    assert "bedrooms" not in qs
+
+
+def test_url_uses_percent_encoded_brackets():
+    f = SearchFilter(location_slug=PLACE_ID_THESSALONIKI)
+    url = build_search_url(f)
+    # urlencode percent-encodes '[' and ']' to %5B/%5D
+    assert "geo_place_ids%5B%5D=" in url
