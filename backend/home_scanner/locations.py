@@ -1,6 +1,8 @@
 """Greek-area location registry, sourced from `locations.yml`.
 
-Provides Spitogatos URL-slug lookup with fuzzy matching for the bot's /new wizard.
+Provides:
+- `slug` — Google Place ID, used by the xe.gr scraper.
+- `url_slug` — URL-safe identifier for the public frontend at /listings/<url_slug>.
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ _FUZZ_CUTOFF = 70  # 0-100; below this we report no match
 class Location:
     name: str
     slug: str
+    url_slug: str
     aliases: tuple[str, ...]
 
     @property
@@ -33,6 +36,7 @@ def load_locations() -> list[Location]:
         Location(
             name=entry["name"],
             slug=entry["slug"],
+            url_slug=entry["url_slug"],
             aliases=tuple(a.lower() for a in entry.get("aliases", [])),
         )
         for entry in raw
@@ -40,16 +44,12 @@ def load_locations() -> list[Location]:
 
 
 def find_locations(query: str, limit: int = 5) -> list[Location]:
-    """Return up to `limit` Locations whose name or aliases best match `query`.
-
-    Returns empty list if `query` is empty or no match passes the cutoff.
-    """
+    """Return up to `limit` Locations whose name or aliases best match `query`."""
     query = query.strip().lower()
     if not query:
         return []
 
     locations = load_locations()
-    # Build a flat list of (search_term → location) pairs for fuzzy matching
     term_to_loc: dict[str, Location] = {}
     for loc in locations:
         for term in loc.search_terms:
@@ -59,7 +59,7 @@ def find_locations(query: str, limit: int = 5) -> list[Location]:
         query,
         term_to_loc.keys(),
         scorer=fuzz.WRatio,
-        limit=limit * 3,  # over-fetch to dedupe
+        limit=limit * 3,
         score_cutoff=_FUZZ_CUTOFF,
     )
 

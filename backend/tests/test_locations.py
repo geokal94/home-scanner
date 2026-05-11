@@ -9,9 +9,15 @@ def test_load_locations_returns_list_of_location():
     locs = load_locations()
     assert len(locs) > 10
     assert all(isinstance(loc, Location) for loc in locs)
-    assert all(loc.slug and loc.name for loc in locs)
-    # `slug` now stores Google Place IDs, which all start with "ChIJ"
+    assert all(loc.slug and loc.name and loc.url_slug for loc in locs)
+    # `slug` is a Google Place ID
     assert all(loc.slug.startswith("ChIJ") for loc in locs)
+    # `url_slug` is URL-safe (lowercase, hyphens, no spaces or Greek)
+    for loc in locs:
+        assert loc.url_slug == loc.url_slug.lower()
+        assert " " not in loc.url_slug
+        # All-ASCII
+        assert loc.url_slug.encode("ascii", errors="ignore").decode() == loc.url_slug
 
 
 def test_find_locations_exact_match_returns_top():

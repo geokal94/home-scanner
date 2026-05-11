@@ -1,49 +1,63 @@
 # Greek apartment search locations.
 #
 # `slug` here holds the **Google Place ID** that xe.gr uses in its
-# `geo_place_ids[]` query parameter. To add a new location: search for it at
-# https://www.xe.gr/property/results?item_type=re_residence&transaction_name=rent
-# and copy the Place ID from the resulting URL.
+# `geo_place_ids[]` query parameter. `url_slug` is the URL-safe identifier
+# used in the frontend at /listings/<url_slug>. To add a new location: search
+# for it at xe.gr, copy the Place ID from the URL, pick a stable lowercase
+# url_slug (Latin script, hyphens, no Greek accents).
 
 # Major cities
 - name: "Athens"
   aliases: ["athina", "αθήνα"]
   slug: "ChIJ8UNwBh-9oRQR3Y1mdkU1Nic"
+  url_slug: "athens"
 - name: "Thessaloniki"
   aliases: ["thessaloniki", "θεσσαλονίκη"]
   slug: "ChIJ7eAoFPQ4qBQRqXTVuBXnugk"
+  url_slug: "thessaloniki"
 - name: "Patras"
   aliases: ["patra", "πάτρα"]
   slug: "ChIJLe0kpZk1XhMRoIy54iy9AAQ"
+  url_slug: "patras"
 - name: "Larissa"
   aliases: ["larisa", "λάρισα"]
   slug: "ChIJN86P3FaIWBMREMS54iy9AAM"
+  url_slug: "larissa"
 - name: "Kalamata"
   aliases: ["kalamáta", "καλαμάτα"]
   slug: "ChIJKXhLYpmwYRMRnl9ice2VH_w"
+  url_slug: "kalamata"
 - name: "Trikala"
   aliases: ["trikala", "τρίκαλα"]
   slug: "ChIJXy53IjMZWRMRwJ-54iy9AAQ"
+  url_slug: "trikala"
 - name: "Chalkida"
   aliases: ["chalkida", "halkida", "χαλκίδα"]
   slug: "ChIJSxfWwksWoRQRBMk0e18KCzg"
+  url_slug: "chalkida"
 
 # Athens-metro municipalities
 - name: "Piraeus"
   aliases: ["pireas", "πειραιάς"]
   slug: "ChIJRzGst-u7oRQR9_0w_5XaINg"
+  url_slug: "piraeus"
 - name: "Peristeri"
   aliases: ["peristeri", "περιστέρι"]
   slug: "ChIJTazECEejoRQRYRYsuxSJ348"
+  url_slug: "peristeri"
 - name: "Aigaleo"
   aliases: ["aigaleo", "αιγάλεω"]
   slug: "ChIJvUGcxaS8oRQRhQVsOC1EXzw"
+  url_slug: "aigaleo"
 - name: "Ilion"
   aliases: ["ilion", "ίλιον"]
   slug: "ChIJZfP8CqijoRQRoHm54iy9AAQ"
+  url_slug: "ilion"
 - name: "Petroupoli"
   aliases: ["petroupoli", "πετρούπολη"]
   slug: "ChIJ46nkZnejoRQRhcY8oQ1xtI4"
+  url_slug: "petroupoli"
 - name: "Chaidari"
   aliases: ["chaidari", "haidari", "χαϊδάρι"]
   slug: "ChIJIZwoz9W6oRQREHu54iy9AAQ"
+  url_slug: "chaidari"
