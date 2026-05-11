@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Athens",
+    "url_slug": "athens"
+  },
+  {
+    "name": "Thessaloniki",
+    "url_slug": "thessaloniki"
+  },
+  {
+    "name": "Patras",
+    "url_slug": "patras"
+  },
+  {
+    "name": "Larissa",
+    "url_slug": "larissa"
+  },
+  {
+    "name": "Kalamata",
+    "url_slug": "kalamata"
+  },
+  {
+    "name": "Trikala",
+    "url_slug": "trikala"
+  },
+  {
+    "name": "Chalkida",
+    "url_slug": "chalkida"
+  },
+  {
+    "name": "Piraeus",
+    "url_slug": "piraeus"
+  },
+  {
+    "name": "Peristeri",
+    "url_slug": "peristeri"
+  },
+  {
+    "name": "Aigaleo",
+    "url_slug": "aigaleo"
+  },
+  {
+    "name": "Ilion",
+    "url_slug": "ilion"
+  },
+  {
+    "name": "Petroupoli",
+    "url_slug": "petroupoli"
+  },
+  {
+    "name": "Chaidari",
+    "url_slug": "chaidari"
+  }
+]
