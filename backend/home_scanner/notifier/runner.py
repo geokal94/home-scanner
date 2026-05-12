@@ -57,65 +57,79 @@ async def run_one_scrape_cycle(
     session.add(run)
     session.flush()
 
-    searches = list_active_saved_searches(session)
-    chat_id_for_search = {s.id: s.user.telegram_chat_id for s in searches}
+    try:
+        searches = list_active_saved_searches(session)
+        chat_id_for_search = {s.id: s.user.telegram_chat_id for s in searches}
 
-    all_alerts: list[tuple[int, int]] = []
+        all_alerts: list[tuple[int, int]] = []
 
-    for search in searches:
-        summary.searches_processed += 1
-        f = SearchFilter(
-            location_slug=search.location_slug,
-            min_price=search.min_price,
-            max_price=search.max_price,
-            min_bedrooms=search.min_bedrooms,
-            max_bedrooms=search.max_bedrooms,
-        )
-        try:
-            scraped = list(scrape_search_fn(f, client=client))
-        except ScrapeError as exc:
-            log.warning("runner.search_failed", slug=search.location_slug, error=str(exc))
-            summary.errors["failed"][search.location_slug] = str(exc)
-            continue
-
-        if not scraped:
-            # 200 OK + zero parsed listings → almost certainly a Spitogatos layout
-            # change broke our selectors. The "#1 maintenance risk" canary per spec §8.
-            log.warning("runner.zero_listings_on_200", slug=search.location_slug)
-            summary.errors["failed"][search.location_slug] = "zero_listings_on_200"
-            continue
-
-        summary.listings_seen += len(scraped)
-
-        # Upsert listings, then re-query DB-side matches (handles previously-seen ones too)
-        for s in scraped:
-            upsert_listing(
-                session, now=now,
-                external_id=s.external_id, url=s.url, title=s.title,
-                price_eur=s.price_eur, bedrooms=s.bedrooms,
-                area_m2=s.area_m2, location_text=s.location_text,
+        for search in searches:
+            summary.searches_processed += 1
+            f = SearchFilter(
+                location_slug=search.location_slug,
+                min_price=search.min_price,
+                max_price=search.max_price,
+                min_bedrooms=search.min_bedrooms,
+                max_bedrooms=search.max_bedrooms,
             )
-        session.flush()
+            try:
+                scraped = list(scrape_search_fn(f, client=client))
+            except ScrapeError as exc:
+                log.warning("runner.search_failed", slug=search.location_slug, error=str(exc))
+                summary.errors["failed"][search.location_slug] = str(exc)
+                continue
 
-        candidates = listings_matching_search(session, search=search)
-        already = listing_ids_already_alerted(session, search_id=search.id)
-        alerts = compute_alerts_to_send(
-            search, candidates, already_alerted_listing_ids=already
+            if not scraped:
+                # 200 OK + zero parsed listings → almost certainly an xe.gr layout
+                # change broke our selectors. The "#1 maintenance risk" canary per spec §8.
+                log.warning("runner.zero_listings_on_200", slug=search.location_slug)
+                summary.errors["failed"][search.location_slug] = "zero_listings_on_200"
+                continue
+
+            summary.listings_seen += len(scraped)
+
+            # Upsert listings, then re-query DB-side matches (handles previously-seen ones too)
+            for s in scraped:
+                upsert_listing(
+                    session, now=now,
+                    external_id=s.external_id, url=s.url, title=s.title,
+                    price_eur=s.price_eur, bedrooms=s.bedrooms,
+                    area_m2=s.area_m2, location_text=s.location_text,
+                )
+            session.flush()
+
+            candidates = listings_matching_search(session, search=search)
+            already = listing_ids_already_alerted(session, search_id=search.id)
+            alerts = compute_alerts_to_send(
+                search, candidates, already_alerted_listing_ids=already
+            )
+            all_alerts.extend(alerts)
+
+        summary.new_alerts = await dispatch_alerts(
+            session, bot=bot, alerts=all_alerts,
+            chat_id_for_search=chat_id_for_search, now=now,
         )
-        all_alerts.extend(alerts)
 
-    summary.new_alerts = await dispatch_alerts(
-        session, bot=bot, alerts=all_alerts,
-        chat_id_for_search=chat_id_for_search, now=now,
-    )
-
-    run.finished_at = now
-    run.searches_processed = summary.searches_processed
-    run.listings_seen = summary.listings_seen
-    run.new_alerts = summary.new_alerts
-    run.errors = summary.errors
-    run.status = "ok"
-    session.flush()
+        run.finished_at = now
+        run.searches_processed = summary.searches_processed
+        run.listings_seen = summary.listings_seen
+        run.new_alerts = summary.new_alerts
+        run.errors = summary.errors
+        run.status = "ok"
+        session.flush()
+    except Exception as exc:
+        # Uncaught failure mid-cycle: mark the run failed so /healthz reports "down"
+        # rather than leaving status="running" forever.
+        log.exception("runner.unhandled_error")
+        run.finished_at = datetime.now(now.tzinfo) if now.tzinfo else now
+        run.status = "failed"
+        run.searches_processed = summary.searches_processed
+        run.listings_seen = summary.listings_seen
+        run.new_alerts = summary.new_alerts
+        summary.errors["failed"]["__unhandled__"] = f"{type(exc).__name__}: {exc}"
+        run.errors = summary.errors
+        session.flush()
+        raise
 
     log.info(
         "runner.done",

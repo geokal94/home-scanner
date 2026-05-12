@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "home-scanner"
 version = "0.1.0"
-description = "Telegram alerts for new Greek apartment rentals on spitogatos.gr"
+description = "Telegram alerts for new Greek apartment rentals on xe.gr"
 authors = ["Giorgos Kallis <giorgos.kallis.gr@gmail.com>"]
 package-mode = true
 packages = [{include = "home_scanner"}]

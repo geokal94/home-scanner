@@ -108,3 +108,32 @@ async def test_run_one_cycle_flags_zero_listings_on_200(db_session: Session):
 
     runs = db_session.query(ScrapeRun).all()
     assert runs[0].errors == {"failed": {"marousi": "zero_listings_on_200"}}
+
+
+@pytest.mark.asyncio
+async def test_unhandled_exception_marks_run_failed(db_session: Session):
+    """If something inside the cycle raises unexpectedly, the ScrapeRun row must
+    be marked status='failed' before re-raising — otherwise /healthz can never
+    report 'down' because it relies on the latest run's status field."""
+    user = get_or_create_user(db_session, telegram_chat_id=14, telegram_username=None)
+    create_saved_search(db_session, user_id=user.id, location_slug="marousi")
+    db_session.flush()
+
+    def boom(f, client=None):
+        raise RuntimeError("DB connection lost mid-scrape")
+
+    bot = AsyncMock()
+
+    with pytest.raises(RuntimeError, match="DB connection lost"):
+        await run_one_scrape_cycle(
+            session=db_session,
+            bot=bot,
+            scrape_search_fn=boom,
+            now=datetime.now(UTC),
+        )
+
+    runs = db_session.query(ScrapeRun).all()
+    assert len(runs) == 1
+    assert runs[0].status == "failed"
+    assert runs[0].finished_at is not None
+    assert "__unhandled__" in runs[0].errors["failed"]
