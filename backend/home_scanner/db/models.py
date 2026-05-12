@@ -84,6 +84,7 @@ class Listing(Base):
     bedrooms: Mapped[int | None] = mapped_column(SmallInteger)
     area_m2: Mapped[int | None] = mapped_column(SmallInteger)
     location_text: Mapped[str | None] = mapped_column(Text)
+    image_url: Mapped[str | None] = mapped_column(Text)
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

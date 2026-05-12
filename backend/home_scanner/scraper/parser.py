@@ -82,6 +82,7 @@ def _parse_card(card: Tag) -> ScrapedListing | None:
     location_text = _text_in(card, "h3", "common-property-ad-address")
     area_m2 = _extract_area(title) if title else None
     bedrooms = _extract_bedrooms(card)
+    image_url = _extract_image_url(card)
 
     return ScrapedListing(
         external_id=external_id,
@@ -91,6 +92,7 @@ def _parse_card(card: Tag) -> ScrapedListing | None:
         bedrooms=bedrooms,
         area_m2=area_m2,
         location_text=location_text,
+        image_url=image_url,
     )
 
 
@@ -119,6 +121,26 @@ def _extract_price(card: Tag) -> int | None:
 def _extract_area(title: str) -> int | None:
     match = _AREA_RE.search(title)
     return int(match.group(1)) if match else None
+
+
+def _extract_image_url(card: Tag) -> str | None:
+    """Find the listing thumbnail.
+
+    xe.gr puts a `<picture>` element inside `.common-property-ad-image` with a
+    `<source>` (webp) and an `<img>` (jpg fallback). The `<img src=...>` URL is
+    a CDN link to a 640×480 thumbnail; we prefer it because it's the most
+    portable across browsers.
+    """
+    container = card.find(class_="common-property-ad-image")
+    if not isinstance(container, Tag):
+        return None
+    img = container.find("img", src=True)
+    if not isinstance(img, Tag):
+        return None
+    src = img.get("src")
+    if not isinstance(src, str) or not src.startswith("http"):
+        return None
+    return src
 
 
 def _extract_bedrooms(card: Tag) -> int | None:

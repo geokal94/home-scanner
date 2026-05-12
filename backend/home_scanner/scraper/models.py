@@ -22,3 +22,4 @@ class ScrapedListing:
     bedrooms: int | None
     area_m2: int | None
     location_text: str | None
+    image_url: str | None = None

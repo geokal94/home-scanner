@@ -95,6 +95,7 @@ async def run_one_scrape_cycle(
                     external_id=s.external_id, url=s.url, title=s.title,
                     price_eur=s.price_eur, bedrooms=s.bedrooms,
                     area_m2=s.area_m2, location_text=s.location_text,
+                    image_url=s.image_url,
                 )
             session.flush()
 

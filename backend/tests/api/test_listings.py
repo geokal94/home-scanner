@@ -12,6 +12,7 @@ def _make_listing(
     price: int = 800,
     bedrooms: int | None = 2,
     location: str | None = "Athens",
+    image_url: str | None = None,
     is_active: bool = True,
     first_seen_at: datetime | None = None,
 ) -> Listing:
@@ -24,10 +25,23 @@ def _make_listing(
         bedrooms=bedrooms,
         area_m2=60,
         location_text=location,
+        image_url=image_url,
         first_seen_at=first_seen_at or now,
         last_seen_at=now,
         is_active=is_active,
     )
+
+
+def test_listings_response_includes_image_url(api_client, session_factory):
+    """Serializer must surface image_url so the frontend can show thumbnails."""
+    with session_factory() as s:
+        s.add(_make_listing("with-img", image_url="https://blob.cdn.xe.gr/x.jpg"))
+        s.add(_make_listing("without-img", image_url=None))
+        s.commit()
+    body = api_client.get("/listings").json()
+    by_id = {item["external_id"]: item for item in body["listings"]}
+    assert by_id["with-img"]["image_url"] == "https://blob.cdn.xe.gr/x.jpg"
+    assert by_id["without-img"]["image_url"] is None
 
 
 def test_listings_empty_returns_zero_total(

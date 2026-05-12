@@ -113,6 +113,7 @@ def upsert_listing(
     bedrooms: int | None,
     area_m2: int | None,
     location_text: str | None,
+    image_url: str | None = None,
 ) -> Listing:
     """Insert or update by external_id. Sets first_seen_at on insert, last_seen_at always."""
     stmt = insert(Listing).values(
@@ -123,6 +124,7 @@ def upsert_listing(
         bedrooms=bedrooms,
         area_m2=area_m2,
         location_text=location_text,
+        image_url=image_url,
         first_seen_at=now,
         last_seen_at=now,
         is_active=True,
@@ -135,6 +137,7 @@ def upsert_listing(
             "bedrooms": bedrooms,
             "area_m2": area_m2,
             "location_text": location_text,
+            "image_url": image_url,
             "last_seen_at": now,
             "is_active": True,
         },

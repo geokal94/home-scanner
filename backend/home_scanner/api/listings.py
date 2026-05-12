@@ -80,6 +80,7 @@ def _to_dict(listing: Listing) -> dict[str, Any]:
         "bedrooms": listing.bedrooms,
         "area_m2": listing.area_m2,
         "location_text": listing.location_text,
+        "image_url": listing.image_url,
         "first_seen_at": listing.first_seen_at.isoformat(),
         "last_seen_at": listing.last_seen_at.isoformat(),
     }

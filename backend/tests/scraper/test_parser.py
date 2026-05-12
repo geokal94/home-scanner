@@ -25,6 +25,34 @@ def test_parses_real_thessaloniki_page():
     assert sample.area_m2 is not None  # Every card has size in title
 
 
+def test_parses_image_url_when_present():
+    """xe.gr embeds an `<img src=>` inside `.common-property-ad-image`. The
+    parser pulls it for use as a thumbnail in the frontend + Telegram alerts."""
+    html = _load("thessaloniki-page1.html")
+    listings = parse_listings(html)
+    with_image = [item for item in listings if item.image_url]
+    # Vast majority of real cards have an image
+    assert len(with_image) >= 20
+    for item in with_image:
+        assert item.image_url.startswith("http")
+        assert "spitogatos" not in item.image_url  # only xe.gr CDN URLs
+
+
+def test_parser_handles_missing_image():
+    """A card without an image tag should still parse — `image_url` is None."""
+    html = """
+    <html><body>
+    <div class="common-ad">
+      <a href="/property/d/enoikiaseis-katoikion/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/x">x</a>
+      <span class="property-ad-price">800 €</span>
+    </div>
+    </body></html>
+    """
+    listings = parse_listings(html)
+    assert len(listings) == 1
+    assert listings[0].image_url is None
+
+
 def test_parses_bedrooms_when_present():
     """xe.gr shows explicit bedroom count via xe-bedroom icon + count span."""
     html = _load("thessaloniki-page1.html")
