@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# home-scanner frontend
 
-## Getting Started
+Next.js 16 (App Router) + Tailwind 4 + TypeScript. Public landing page,
+browseable listings, per-area routes. Pure consumer of the FastAPI backend —
+no Next.js API routes are used.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** with the App Router; pages live under `app/`.
+- **Tailwind v4** (zero-config; plugins loaded via `@plugin` directive in `globals.css`).
+- **pnpm** as the package manager (lockfile committed; `onlyBuiltDependencies`
+  declared in `pnpm-workspace.yaml`).
+- **Playwright** for the one end-to-end smoke test (`tests/e2e/`).
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+echo 'NEXT_PUBLIC_API_URL=https://home-scanner.fly.dev' > .env.local
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To run against a local backend instead, replace the URL with `http://localhost:8080`
+(or wherever your `python -m home_scanner serve` is listening).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Build
 
-## Learn More
+```bash
+pnpm build
+```
 
-To learn more about Next.js, take a look at the following resources:
+The `prebuild` script (`scripts/generate-locations.mjs`) reads
+`../backend/home_scanner/locations.yml` and writes `lib/locations.json`, so
+the frontend always ships the current location set without duplicating the
+YAML.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Routes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Path | Rendering |
+|---|---|
+| `/` | static + ISR (60s) — landing page, fetches counters from `/healthz` |
+| `/about` | static — how-it-works copy |
+| `/listings` | dynamic — filter-bar + listing grid + pagination, reads URL query params |
+| `/listings/[slug]` | dynamic + ISR (1h) — per-area page; `generateStaticParams` enumerates `locations.yml` for SEO |
 
-## Deploy on Vercel
+## Tests
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# In one terminal:
+pnpm dev
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# In another:
+pnpm test:e2e
+```
+
+Or `pnpm exec playwright test --list` to verify the test config without running them.
+GitHub Actions runs these against every successful Vercel deployment
+(`.github/workflows/frontend-e2e.yml`).
+
+## Environment variables
+
+| Variable | Where set |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Vercel project settings (production) + `.env.local` (dev) |
+
+That's the only one. Everything else (backend secrets) lives on Fly.
