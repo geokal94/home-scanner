@@ -1,27 +1,85 @@
 # home-scanner
 
-Telegram alerts for new Greek apartment rentals on **xe.gr**. Scrapes hourly, alerts you when a listing matches your saved filters.
+Telegram alerts for newly-posted apartment rentals on **xe.gr** (Greece's
+largest classifieds site). Users configure saved searches in a Telegram bot;
+an hourly scraper diffs new listings against ones they've already been
+alerted about and pings them on Telegram within minutes of a match.
 
-## Status
+A small public website at [home-scanner.vercel.app](https://home-scanner.vercel.app)
+shows the current listings inventory and links into the bot.
 
-- **Plan 1 — Backend MVP** complete
-- **Plan 2 — Production deploy** complete (FastAPI service, Dockerfile, Fly.io scale-to-zero, GitHub Actions hourly cron + CI + daily canary, Sentry wiring)
-- **Plan 3 — Next.js frontend** upcoming
+## Why this exists
 
-Originally targeted spitogatos.gr; pivoted to xe.gr after discovering Spitogatos uses an F5/Reese84 anti-bot WAF that serves stub HTML to non-browser clients. xe.gr ships clean server-rendered HTML to any client with no proxy or fingerprint trickery — same product story, simpler architecture.
+xe.gr and other Greek rental sites are stateless — there's no "alert me when
+a new 2BR in Athens centre under €1000 is posted." Greek renters check the
+site every few hours; the good apartments are gone within 24h of being
+listed. home-scanner closes that loop.
 
-See `docs/superpowers/specs/2026-05-08-home-scanner-portfolio-design.md` for the design and `docs/superpowers/plans/` for the build plans.
+## Architecture
+
+```
+GitHub Actions (hourly cron)
+        │ HTTP POST + bearer secret
+        ▼
+   ┌────────────────────────────┐         ┌─────────────────┐
+   │  FastAPI on Fly.io         │ HTTPS   │  xe.gr          │
+   │   • /healthz               │ ──────▶ │  (server-       │
+   │   • /listings              │         │   rendered HTML)│
+   │   • /internal/scrape       │         └─────────────────┘
+   │   • /webhook/telegram      │
+   │                            │ ◀────── Telegram webhook updates
+   │  Modules:                  │
+   │   • scraper  (httpx + bs4) │ ──────▶ Neon Postgres
+   │   • notifier (diff+dispatch)│
+   │   • bot      (python-PTB)  │ ──────▶ Telegram Bot API
+   └────────────────────────────┘
+            ▲  HTTPS (JSON)
+            │
+   ┌────────────────────────────┐
+   │  Next.js on Vercel         │   ── consumed by browsers
+   │   • /                      │
+   │   • /listings(+ filters)   │
+   │   • /listings/[slug]       │
+   │   • /about                 │
+   └────────────────────────────┘
+```
+
+**Backend** is a single Python service that boots an HTTP API, a long-polling-
+or-webhook Telegram bot, and an on-demand scrape pipeline. It scales to zero
+on Fly.io when idle (the GitHub Actions cron wakes it once an hour for the
+scrape; Telegram webhooks wake it on user activity).
+
+**Frontend** is a separate Next.js app that consumes the FastAPI JSON
+endpoints. No Next.js API routes — clean consumer/server split.
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Language | Python 3.12 (backend) + TypeScript (frontend) |
+| Backend framework | FastAPI + `python-telegram-bot` |
+| Database | Postgres 16 (Neon free tier in prod, testcontainers in CI) |
+| ORM + migrations | SQLAlchemy 2 + Alembic |
+| Scraper | `httpx` + `beautifulsoup4`, `tenacity` retry |
+| Frontend framework | Next.js 16 (App Router) + Tailwind v4 |
+| Package managers | Poetry (backend), pnpm (frontend) |
+| Hosting | Fly.io (backend), Vercel (frontend), Neon (DB) |
+| Observability | Sentry (optional), structlog |
+| CI | GitHub Actions: hourly scrape cron, lint+test on PR, daily live-canary, Playwright smoke on Vercel deploy |
+| Testing | pytest with real Postgres via testcontainers; Playwright E2E |
 
 ## Local setup
 
-Requirements: Python 3.12, Poetry, Docker (for local Postgres), a Telegram bot token from [@BotFather](https://t.me/botfather).
+Requirements: Python 3.12, Poetry, Docker (for local Postgres + testcontainers),
+a Telegram bot token from [@BotFather](https://t.me/botfather).
+
+### Backend
 
 ```bash
-# 1. Install Python deps
 cd backend
 poetry install
 
-# 2. Start a local Postgres
+# Start a local Postgres
 docker run -d --name home_scanner_pg \
   -p 5432:5432 \
   -e POSTGRES_PASSWORD=home_scanner \
@@ -29,120 +87,68 @@ docker run -d --name home_scanner_pg \
   -e POSTGRES_DB=home_scanner \
   postgres:16-alpine
 
-# 3. Configure secrets
-cp .env.example .env
-# Edit .env: fill DATABASE_URL, TELEGRAM_BOT_TOKEN. DataImpulse fields are
-# optional — xe.gr doesn't need a proxy.
+cp .env.example .env  # then fill in DATABASE_URL + TELEGRAM_BOT_TOKEN
 
-# 4. Apply migrations
 poetry run alembic upgrade head
+
+# Three CLI entrypoints:
+poetry run python -m home_scanner bot      # start the bot (long-polling)
+poetry run python -m home_scanner scrape   # one scrape cycle, then exit
+poetry run python -m home_scanner serve    # FastAPI server (production mode)
 ```
 
-## Running
+### Frontend
 
 ```bash
-# Start the bot (long-polling — blocks the terminal)
-poetry run python -m home_scanner bot
-
-# In another terminal: trigger one scrape cycle
-poetry run python -m home_scanner scrape
+cd frontend
+pnpm install
+echo 'NEXT_PUBLIC_API_URL=http://localhost:8080' > .env.local
+pnpm dev
 ```
 
-## End-to-end smoke test
-
-1. Start the bot: `python -m home_scanner bot`
-2. In Telegram: open your bot, send `/start`, then `/new`, follow the wizard.
-3. Confirm a saved search appears via `/list`.
-4. Stop the bot, then run: `python -m home_scanner scrape`
-5. Confirm Telegram messages arrive for matching listings.
+Visit `http://localhost:3000`.
 
 ## Tests
 
 ```bash
-poetry run pytest -v
+cd backend && poetry run pytest -v
 ```
 
-The test suite spins up a real Postgres in a testcontainer, so Docker must be running.
-
-## Deploy (Plan 2)
-
-Requirements: a [Fly.io account](https://fly.io), `flyctl` installed, a [Neon](https://neon.tech) Postgres database (free tier), a [Sentry](https://sentry.io) project (optional).
-
-### One-time setup
+The suite spins up a real Postgres in a Docker testcontainer per session
+(so Docker must be running). Tests cover the parser against saved xe.gr
+HTML fixtures, the notifier's diff logic, Telegram message dispatch with
+retry, the bot's `/new` conversation wizard, and the HTTP API.
 
 ```bash
-cd backend
-
-# Create the Fly app
-flyctl apps create home-scanner   # change name if collided
-
-# Set secrets (the easy path is via the Fly web UI at
-# https://fly.io/apps/<your-app>/secrets — adding each one at a time prevents
-# multi-line paste mishaps).
-flyctl secrets set \
-  DATABASE_URL=postgresql+psycopg://USER:PASS@HOST/DB?sslmode=require \
-  TELEGRAM_BOT_TOKEN=... \
-  SCRAPE_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')" \
-  TELEGRAM_WEBHOOK_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')" \
-  SENTRY_DSN=... \
-  PUBLIC_BASE_URL=https://home-scanner.fly.dev
-
-# First deploy (release_command runs `alembic upgrade head`)
-flyctl deploy
-
-# Register the webhook URL with Telegram (one-shot, replace both vars)
-curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=https://home-scanner.fly.dev/webhook/telegram/${TELEGRAM_WEBHOOK_SECRET}"
+cd frontend && pnpm test:e2e   # against a running dev server or PLAYWRIGHT_BASE_URL
 ```
 
-**Important:** `DATABASE_URL` from Neon must use the `postgresql+psycopg://...` scheme (Neon's UI gives `postgresql://...`; prepend `+psycopg`). Without it, alembic fails at deploy.
+## Design notes
 
-### Subsequent deploys
+- **`scraper.parser` is the only place that talks to xe.gr HTML.** When xe.gr
+  changes its markup, the breakage is localised here. A daily
+  `daily-canary.yml` workflow scrapes a known-busy URL and asserts ≥10
+  listings parse; failure auto-opens a GitHub issue.
+- **`notifier.diff` is a pure function with `Protocol`-typed inputs** — given
+  saved searches + listings + the set of already-alerted IDs, returns which
+  alerts to send. No DB, no Telegram, fully unit-tested.
+- **Cold-start UX:** when a user creates a saved search, all currently-matching
+  listings are seeded into `alerts_sent` immediately so the next scrape only
+  pings about genuinely new listings, not the entire current inventory.
+- **`/healthz` exposes `status: ok | degraded | down`** based on the most
+  recent scrape run's age and status — the frontend uses this for a footer
+  pill that turns yellow/red when the pipeline is unhealthy.
 
-```bash
-cd backend && flyctl deploy
-```
+## Project history
 
-The release_command runs first; if migrations fail the deploy aborts and the previous version keeps serving.
-
-### Verify
-
-```bash
-curl https://home-scanner.fly.dev/healthz
-# → {"status": "down" or "ok", ...}
-
-SCRAPE_SECRET='<your value>'
-curl -H "Authorization: Bearer $SCRAPE_SECRET" -X POST https://home-scanner.fly.dev/internal/scrape
-# → {"searches_processed": ..., "listings_seen": ..., ...}
-```
-
-### GitHub Actions secrets (required for cron + canary)
-
-Add in repo Settings → Secrets and variables → Actions:
-
-- `APP_URL` — public URL of the deployed app (e.g. `https://home-scanner.fly.dev`)
-- `SCRAPE_SECRET` — same value used in `flyctl secrets set SCRAPE_SECRET=...`
-- *(Optional — only if you re-enable DataImpulse proxying)* `DATAIMPULSE_USER`, `DATAIMPULSE_PASS`, `DATAIMPULSE_HOST`, `DATAIMPULSE_PORT` for the daily canary
-
-Without `APP_URL` + `SCRAPE_SECRET` set, the hourly cron workflow still runs but the curl exits non-zero (visible in the Actions tab).
-
-## Adding new locations
-
-The bot's `/new` wizard matches against `backend/home_scanner/locations.yml`. Each entry maps a Greek city/area to xe.gr's Google Place ID. To add a new area:
-
-1. Open https://www.xe.gr/property/results?item_type=re_residence&transaction_name=rent in your browser
-2. Use xe.gr's location autocomplete to pick the area
-3. Copy the `ChIJ...` value from the resulting URL's `geo_place_ids[]` parameter
-4. Add an entry to `locations.yml`:
-   ```yaml
-   - name: "Your Area"
-     aliases: ["alias1", "ελληνικά"]
-     slug: "ChIJ..."
-   ```
-5. Commit, deploy.
-
-## Architecture
-
-See [`docs/superpowers/specs/2026-05-08-home-scanner-portfolio-design.md`](docs/superpowers/specs/2026-05-08-home-scanner-portfolio-design.md).
+The project originally targeted spitogatos.gr. After Plan 2's first
+production scrape returned zero listings, investigation showed Spitogatos
+serves an empty Vue shell to non-browser clients (F5/Reese84 WAF
+fingerprinting). The codebase was pivoted to xe.gr, which serves
+SSR HTML to any client. The `zero_listings_on_200` canary built into the
+runner caught this within minutes of deploying. The design spec, the
+implementation plans, and the pivot decision are all preserved in
+`docs/superpowers/`.
 
 ## License
 
