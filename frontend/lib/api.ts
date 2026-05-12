@@ -11,6 +11,7 @@ export type Listing = {
   bedrooms: number | null;
   area_m2: number | null;
   location_text: string | null;
+  image_url: string | null;
   first_seen_at: string;
   last_seen_at: string;
 };
