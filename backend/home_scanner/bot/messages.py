@@ -32,5 +32,5 @@ def format_listing_alert(
     return (
         f"🏠 *€{price_eur:,}* · {escape_md(bedrooms_str)}{escape_md(area_str)}\n"
         f"{escape_md(location)}\n"
-        f"[View on spitogatos →]({escape_md_url(url)})"
+        f"[View on xe\\.gr →]({escape_md_url(url)})"
     )

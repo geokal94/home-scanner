@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 WELCOME = (
-    "Hey 👋 I watch *spitogatos\\.gr* for new rentals matching your filters and ping you "
+    "Hey 👋 I watch *xe\\.gr* for new rentals matching your filters and ping you "
     "when something matches\\.\n\n"
     "Use /new to create a saved search\\. /help for everything else\\."
 )
